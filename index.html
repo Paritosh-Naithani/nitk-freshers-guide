@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NITK Fresher's Guide</title>
+  <meta name="description" content="A visual novel experience for incoming NITK students. Navigate campus life, meet seniors, and discover what NITK has to offer." />
+  <meta name="theme-color" content="#020810" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── RESET & ROOT ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy-0:       #020810;
+      --navy-1:       #060F1E;
+      --navy-2:       #0A1628;
+      --blue-core:    #1D4ED8;
+      --blue-bright:  #3B82F6;
+      --blue-light:   #93C5FD;
+      --cyan:         #06B6D4;
+      --indigo:       #4338CA;
+      --white:        #F0F6FF;
+      --muted:        #64748B;
+      --muted-light:  #94A3B8;
+      --glass-bg:     rgba(6, 15, 30, 0.60);
+      --glass-border: rgba(59, 130, 246, 0.22);
+      --radius-card:  18px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--navy-0);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── STAR CANVAS (fixed background layer) ─────────────────────── */
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* ─── AURORA BLOBS ──────────────────────────────────────────────── */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.30;
+      will-change: transform;
+    }
+
+    .aurora-blob:nth-child(1) {
+      width: 75vw; height: 55vh;
+      background: radial-gradient(ellipse, #1E3A8A 0%, transparent 68%);
+      top: -18%; left: -8%;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    .aurora-blob:nth-child(2) {
+      width: 60vw; height: 45vh;
+      background: radial-gradient(ellipse, #0369A1 0%, transparent 68%);
+      top: 5%; right: -12%;
+      animation: drift 12s ease-in-out infinite alternate-reverse;
+    }
+    .aurora-blob:nth-child(3) {
+      width: 55vw; height: 65vh;
+      background: radial-gradient(ellipse, #3730A3 0%, transparent 68%);
+      bottom: -22%; left: 15%;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .aurora-blob:nth-child(4) {
+      width: 42vw; height: 38vh;
+      background: radial-gradient(ellipse, #0E7490 0%, transparent 68%);
+      top: 45%; left: -5%;
+      animation: drift 13s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes drift {
+      0%   { transform: translate(0,    0)    scale(1);    }
+      33%  { transform: translate(3%,   5%)   scale(1.06); }
+      66%  { transform: translate(-3%,  -3%)  scale(0.96); }
+      100% { transform: translate(4%,   2%)   scale(1.04); }
+    }
+
+    /* ─── PAGE WRAPPER ──────────────────────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── HEADER ────────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 2.5rem;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+      background: rgba(2, 8, 16, 0.50);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .logo {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--blue-bright);
+      text-decoration: none;
+    }
+
+    .header-tag {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted-light);
+      border: 1px solid rgba(59, 130, 246, 0.18);
+      border-radius: 99px;
+      padding: 0.28rem 0.85rem;
+    }
+
+    /* ─── HERO ──────────────────────────────────────────────────────── */
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 1.5rem 5rem;
+      min-height: calc(100vh - 57px);
+    }
+
+    /* live dot badge */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.07);
+      border: 1px solid rgba(6, 182, 212, 0.28);
+      border-radius: 99px;
+      padding: 0.32rem 1rem;
+      margin-bottom: 2.2rem;
+      animation: fadeUp 0.65s ease both;
+    }
+
+    .live-dot {
+      width: 5px; height: 5px;
+      background: var(--cyan);
+      border-radius: 50%;
+      animation: blink 2.2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* title block */
+    .title-block {
+      position: relative;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+
+    .title-glow-halo {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%; height: 140%;
+      background: radial-gradient(ellipse, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+      filter: blur(28px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2rem, 7.5vw, 5.8rem);
+      font-weight: 900;
+      line-height: 1.04;
+      letter-spacing: -0.01em;
+      background: linear-gradient(140deg, #FFFFFF 0%, var(--blue-light) 48%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      margin-top: 1.1rem;
+      font-size: clamp(0.85rem, 2.4vw, 1.15rem);
+      font-weight: 300;
+      font-style: italic;
+      color: #7DD3FC;
+      letter-spacing: 0.04em;
+    }
+
+    /* divider line */
+    .line-divider {
+      width: 56px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue-bright), transparent);
+      margin: 2.8rem auto;
+      animation: fadeUp 0.6s 0.25s ease both;
+    }
+
+    /* ─── BUTTON GRID ───────────────────────────────────────────────── */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 0.95rem;
+      width: 100%;
+      max-width: 580px;
+      animation: fadeUp 0.7s 0.35s ease both;
+    }
+
+    /* Play Game spans full width */
+    .btn-play { grid-column: 1 / -1; }
+
+    /* ─── SHARED BUTTON BASE ────────────────────────────────────────── */
+    .btn {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 1.35rem 1.5rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      color: var(--white);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition:
+        transform       0.26s ease,
+        border-color    0.26s ease,
+        box-shadow      0.26s ease,
+        background      0.26s ease;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--blue-bright);
+      outline-offset: 3px;
+    }
+
+    /* hover glow */
+    .btn:hover {
+      transform: translateY(-5px);
+      border-color: rgba(59, 130, 246, 0.60);
+      box-shadow:
+        0 12px 36px rgba(59, 130, 246, 0.20),
+        0 0 0 1px  rgba(59, 130, 246, 0.10);
+      background: rgba(6, 15, 30, 0.78);
+    }
+
+    .btn:active { transform: translateY(-2px); }
+
+    /* gradient tint on hover */
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(140deg, rgba(59, 130, 246, 0.10) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.26s ease;
+    }
+    .btn:hover::before { opacity: 1; }
+
+    /* shine sweep */
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -110%;
+      width: 55%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+      transform: skewX(-14deg);
+      transition: left 0.55s ease;
+    }
+    .btn:hover::after { left: 160%; }
+
+    /* ─── PLAY BUTTON specific ──────────────────────────────────────── */
+    .btn-play {
+      background: linear-gradient(135deg,
+        rgba(29, 78, 216, 0.48) 0%,
+        rgba(6, 15, 30, 0.68) 100%);
+      border-color: rgba(59, 130, 246, 0.38);
+      padding: 1.5rem 2rem;
+    }
+
+    .btn-play:hover {
+      background: linear-gradient(135deg,
+        rgba(29, 78, 216, 0.68) 0%,
+        rgba(6, 15, 30, 0.88) 100%);
+      border-color: rgba(59, 130, 246, 0.80);
+      box-shadow:
+        0 14px 44px rgba(59, 130, 246, 0.34),
+        0 0 0 1px  rgba(59, 130, 246, 0.18);
+    }
+
+    /* icon area */
+    .btn-icon {
+      flex-shrink: 0;
+      width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.20);
+      border-radius: 10px;
+      font-size: 1.25rem;
+      transition: background 0.26s, border-color 0.26s;
+    }
+    .btn:hover .btn-icon {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: rgba(59, 130, 246, 0.40);
+    }
+
+    .btn-play .btn-icon {
+      width: 48px; height: 48px;
+      font-size: 1.4rem;
+      background: rgba(59, 130, 246, 0.20);
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+
+    /* text group */
+    .btn-info { display: flex; flex-direction: column; gap: 0.18rem; text-align: left; }
+
+    .btn-label {
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    .btn-play .btn-label {
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-desc {
+      font-size: 0.70rem;
+      font-weight: 400;
+      color: var(--muted-light);
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── FOOTER ────────────────────────────────────────────────────── */
+    footer {
+      padding: 1.4rem 2rem;
+      text-align: center;
+      border-top: 1px solid rgba(59, 130, 246, 0.07);
+      font-size: 0.73rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      animation: fadeUp 0.6s 0.5s ease both;
+    }
+
+    footer a { color: var(--blue-bright); text-decoration: none; opacity: 0.75; }
+    footer a:hover { opacity: 1; }
+
+    /* ─── MODAL OVERLAY ─────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 8, 16, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.30s ease, visibility 0.30s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ─── MODAL CARD ────────────────────────────────────────────────── */
+    .modal-card {
+      position: relative;
+      background: linear-gradient(145deg,
+        rgba(6, 15, 30, 0.97) 0%,
+        rgba(10, 22, 40, 0.99) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.28);
+      border-radius: 22px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.60),
+        0 0 0 1px rgba(59, 130, 246, 0.08);
+      transform: translateY(22px) scale(0.98);
+      transition: transform 0.30s ease;
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    /* custom scrollbar */
+    .modal-card::-webkit-scrollbar { width: 4px; }
+    .modal-card::-webkit-scrollbar-track { background: transparent; }
+    .modal-card::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.28); border-radius: 2px; }
+
+    /* close button */
+    .modal-close {
+      position: absolute;
+      top: 1.1rem; right: 1.1rem;
+      width: 30px; height: 30px;
+      background: rgba(59, 130, 246, 0.09);
+      border: 1px solid rgba(59, 130, 246, 0.18);
+      border-radius: 8px;
+      color: var(--muted-light);
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease;
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-close:hover {
+      background: rgba(59,130,246,0.20);
+      color: var(--white);
+    }
+
+    .modal-emoji { font-size: 2.4rem; margin-bottom: 0.6rem; display: block; }
+
+    .modal-card h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      background: linear-gradient(135deg, #FFFFFF, var(--blue-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal-sub {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1.4rem;
+      display: block;
+    }
+
+    .modal-hr {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.38), transparent);
+      margin-bottom: 1.4rem;
+      border: none;
+    }
+
+    .modal-card p {
+      font-size: 0.88rem;
+      line-height: 1.80;
+      color: #CBD5E1;
+      margin-bottom: 1rem;
+    }
+    .modal-card p:last-of-type { margin-bottom: 0; }
+
+    /* feature tags */
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 1.2rem 0;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 0.28rem 0.75rem;
+      border-radius: 99px;
+      background: rgba(59, 130, 246, 0.09);
+      border: 1px solid rgba(59, 130, 246, 0.22);
+      color: var(--blue-light);
+    }
+
+    /* modal CTA */
+    .modal-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.88rem 1rem;
+      margin-top: 1.2rem;
+      background: linear-gradient(135deg, rgba(29,78,216,0.55), rgba(6,15,30,0.80));
+      border: 1px solid rgba(59, 130, 246, 0.38);
+      border-radius: 12px;
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.24s ease;
+    }
+    .modal-btn:hover {
+      background: linear-gradient(135deg, rgba(29,78,216,0.75), rgba(6,15,30,0.90));
+      border-color: rgba(59, 130, 246, 0.65);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59,130,246,0.22);
+    }
+
+    /* ─── UPI BOX ───────────────────────────────────────────────────── */
+    .upi-box {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid rgba(59, 130, 246, 0.20);
+      border-radius: 12px;
+      padding: 1.1rem 1.2rem;
+      margin: 1.1rem 0 0.5rem;
+    }
+
+    .upi-label-group { flex: 1; min-width: 0; }
+
+    .upi-label-text {
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted-light);
+      margin-bottom: 0.22rem;
+    }
+
+    .upi-id {
+      font-family: 'Courier New', monospace;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.02em;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      padding: 0.42rem 0.95rem;
+      background: rgba(59, 130, 246, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.30);
+      border-radius: 8px;
+      color: var(--blue-bright);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.22s ease;
+    }
+    .copy-btn:hover { background: rgba(59,130,246,0.28); border-color: rgba(59,130,246,0.50); }
+    .copy-btn.copied {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.38);
+      color: #34D399;
+    }
+
+    .upi-note {
+      font-size: 0.72rem !important;
+      color: var(--muted) !important;
+      margin-top: 0.1rem !important;
+    }
+
+    /* ─── ANIMATIONS ────────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(26px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+    @media (max-width: 500px) {
+      header { padding: 0.9rem 1.25rem; }
+      .hero  { padding: 3rem 1.2rem 4rem; }
+
+      .btn-grid {
+        grid-template-columns: 1fr;
+        max-width: 360px;
+      }
+      .btn-play { grid-column: 1; }
+
+      .modal-card { padding: 2rem 1.5rem; }
+    }
+
+    /* ─── REDUCED MOTION ────────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── BACKGROUND LAYERS ──────────────────────────────────────── -->
+  <canvas id="star-canvas"></canvas>
+
+  <div class="aurora">
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+  </div>
+
+  <!-- ── PAGE ───────────────────────────────────────────────────── -->
+  <div class="page">
+
+    <!-- HEADER -->
+    <header>
+      <a href="/" class="logo">NFG</a>
+      <span class="header-tag">Visual Novel · NITK</span>
+    </header>
+
+    <!-- HERO -->
+    <main class="hero">
+
+      <div class="eyebrow">
+        <span class="live-dot"></span>
+        Now Available
+      </div>
+
+      <div class="title-block">
+        <div class="title-glow-halo"></div>
+        <h1>NITK Fresher's Guide</h1>
+        <p class="subtitle">A Visual Novel Experience for Incoming NITK Students</p>
+      </div>
+
+      <div class="line-divider"></div>
+
+      <!-- BUTTONS -->
+      <div class="btn-grid">
+
+        <!-- Play Game -->
+        <a href="/game" class="btn btn-play">
+          <span class="btn-icon">
+            <!-- Play triangle SVG -->
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="color:var(--blue-light)">
+              <path d="M6.5 4.5l9 5.5-9 5.5V4.5z"/>
+            </svg>
+          </span>
+          <div class="btn-info">
+            <span class="btn-label">Play Game</span>
+            <span class="btn-desc">Launch in your browser — no download</span>
+          </div>
+        </a>
+
+        <!-- About the Game -->
+        <button class="btn" onclick="openModal('about')">
+          <span class="btn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue-light)">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </span>
+          <div class="btn-info">
+            <span class="btn-label">About the Game</span>
+            <span class="btn-desc">Story & features</span>
+          </div>
+        </button>
+
+        <!-- GitHub -->
+        <!--
+          ⚠️  EDIT THIS: Replace YOUR_USERNAME with your GitHub username
+          e.g. href="https://github.com/johndoe"
+        -->
+        <a href="https://github.com/YOUR_USERNAME" target="_blank" rel="noopener noreferrer" class="btn">
+          <span class="btn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--blue-light)">
+              <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+            </svg>
+          </span>
+          <div class="btn-info">
+            <span class="btn-label">GitHub</span>
+            <span class="btn-desc">Source code & contributions</span>
+          </div>
+        </a>
+
+        <!-- Support the Project -->
+        <button class="btn" onclick="openModal('support')">
+          <span class="btn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#7DD3FC">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </span>
+          <div class="btn-info">
+            <span class="btn-label">Support the Project</span>
+            <span class="btn-desc">Buy me a coffee ☕</span>
+          </div>
+        </button>
+
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      Made with ♥ for NITK by the forever support of MATA RANI &nbsp;·&nbsp;
+      Built with <a href="https://www.renpy.org/" target="_blank" rel="noopener">Ren'Py</a>
+      &nbsp;·&nbsp; NITK Surathkal
+    </footer>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL — About the Game
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-about" aria-modal="true" role="dialog" aria-labelledby="about-title"
+       onclick="overlayClose(event, 'about')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('about')" aria-label="Close">✕</button>
+      <span class="modal-emoji">📖</span>
+      <h2 id="about-title">About the Game</h2>
+      <span class="modal-sub">NITK Fresher's Guide — Visual Novel</span>
+      <hr class="modal-hr" />
+
+      <p>NITK Fresher's Guide is an interactive visual novel crafted to ease incoming students into the world of NIT Karnataka, Surathkal — one of India's most beautiful (and occasionally chaotic) campuses on the Arabian Sea coast.</p>
+
+      <p>Step into the shoes of a first-year student arriving on campus for the very first time. Meet seniors who'll become mentors and friends, navigate the maze of academic blocks, and discover the unwritten rules of hostel life — all through branching dialogue and real choices that matter.</p>
+
+      <div class="tag-row">
+        <span class="tag">🏛 Campus Exploration</span>
+        <span class="tag">🤝 Social Choices</span>
+        <span class="tag">📚 Academic Survival</span>
+        <span class="tag">🎭 Clubs & Events</span>
+        <span class="tag">🌊 NITK Culture</span>
+        <span class="tag">🏠 Hostel Life</span>
+        <span class="tag">🎮 Ren'Py Engine</span>
+      </div>
+
+      <p>No downloads, no installs — plays entirely in your browser. Perfect for reading the night before your first day, or sharing with your future batchmates.</p>
+
+      <a href="/game" class="modal-btn">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M6.5 4.5l9 5.5-9 5.5V4.5z"/></svg>
+        Play Now
+      </a>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MODAL — Support the Project
+  ═══════════════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-support" aria-modal="true" role="dialog" aria-labelledby="support-title"
+       onclick="overlayClose(event, 'support')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('support')" aria-label="Close">✕</button>
+      <span class="modal-emoji">💙</span>
+      <h2 id="support-title">Support the Project</h2>
+      <span class="modal-sub">Keep the Visual Novel Alive</span>
+      <hr class="modal-hr" />
+
+      <p>This game was built entirely from scratch — late nights, many cups of coffee, and a lot of love for NITK. It's completely free to play, and always will be.</p>
+
+      <p>If it helped you settle into campus life, gave you a laugh, or just made you a little less anxious about Day 1 — consider buying the creator a coffee.It will encourage me for sure.</p>
+
+      <!-- UPI Block -->
+      <!--
+        ⚠️  EDIT THIS: Replace YOUR_UPI_ID@upi with your actual UPI ID
+        e.g. johndoe@okaxis  or  9876543210@ybl
+      -->
+      <div class="upi-box">
+        <div class="upi-label-group">
+          <div class="upi-label-text">UPI ID</div>
+          <div class="upi-id" id="upi-display">paritoshnaithaniofficial@oksbi</div>
+        </div>
+        <button class="copy-btn" id="copy-btn" onclick="copyUPI()">Copy</button>
+      </div>
+
+      <p class="upi-note">Open GPay, PhonePe, Paytm, or any UPI app → Pay to UPI ID above.</p>
+
+      <!--
+        ⚠️  EDIT THIS: Replace # with your donation link
+        e.g. href="https://pages.razorpay.com/yourpage"
+             href="https://buymeacoffee.com/yourusername"
+      -->
+      <a href="#" target="_blank" rel="noopener noreferrer" class="modal-btn">
+        💳 &nbsp; Donate Online
+      </a>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SCRIPTS
+  ═══════════════════════════════════════════════════════════════════ -->
+  <script>
+    /* ── STAR FIELD ──────────────────────────────────────────────── */
+    (function () {
+      const canvas = document.getElementById('star-canvas');
+      const ctx    = canvas.getContext('2d');
+      let W, H, stars = [];
+
+      function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+
+      function init() {
+        stars = [];
+        const n = Math.floor((W * H) / 5800);
+        for (let i = 0; i < n; i++) {
+          stars.push({
+            x:     Math.random() * W,
+            y:     Math.random() * H,
+            r:     Math.random() * 1.1 + 0.15,
+            alpha: Math.random(),
+            spd:   Math.random() * 0.35 + 0.08,
+            dir:   Math.random() > 0.5 ? 1 : -1,
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#020810';
+        ctx.fillRect(0, 0, W, H);
+
+        for (const s of stars) {
+          s.alpha += s.spd * 0.007 * s.dir;
+          if (s.alpha > 1 || s.alpha < 0.06) s.dir *= -1;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(147,197,253,${s.alpha * 0.72})`;
+          ctx.fill();
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', () => { resize(); init(); });
+      resize();
+      init();
+      draw();
+    })();
+
+
+    /* ── MODAL LOGIC ─────────────────────────────────────────────── */
+    function openModal(id) {
+      document.getElementById('modal-' + id).classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+      document.getElementById('modal-' + id).classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function overlayClose(e, id) {
+      if (e.target === e.currentTarget) closeModal(id);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal-overlay.open').forEach(el => {
+        el.classList.remove('open');
+      });
+      document.body.style.overflow = '';
+    });
+
+
+    /* ── COPY UPI ────────────────────────────────────────────────── */
+    function copyUPI() {
+      const text = document.getElementById('upi-display').textContent.trim();
+      const btn  = document.getElementById('copy-btn');
+
+      const succeed = () => {
+        btn.textContent = '✓ Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2200);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(succeed).catch(fallback);
+      } else {
+        fallback();
+      }
+
+      function fallback() {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); succeed(); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+    }
+  </script>
+
+</body>
+</html>
